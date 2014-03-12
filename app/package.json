@@ -1,0 +1,9 @@
+{
+  "name": "njugbe-docker-node-example",
+  "version": "0.0.1",
+  "description": "Sample app for njugbe #9",
+  "dependencies": {
+    "express": "*",
+    "memcached": "*"
+  }
+}
