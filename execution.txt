@@ -1,0 +1,98 @@
+vagrant up
+vagrant ssh
+
+sudo docker version
+
+sudo docker images
+
+cd /vagrant/memcached
+sudo docker build -t njugbe/memcached . # explain build steps
+
+sudo docker images
+
+# show memcached not installed on host
+
+sudo docker run -p 11211:11211 -d njugbe/memcached
+
+sudo docker ps
+
+telnet localhost 11211
+stats
+quit
+
+sudo docker kill CONTAINER_ID
+
+sudo docker ps
+sudo docker ps -a
+
+
+cd /vagrant/node
+sudo docker build -t njugbe/node:0.10.26 . # this will be our parent
+sudo docker run njugbe/node:0.10.26 node --version
+
+
+######
+
+
+cd /vagrant/app
+
+sudo docker build -t njugbe/app:0.1 .
+
+sudo docker run -d -name memcache njugbe/memcached
+
+# No port publish!
+
+sudo docker run \
+  -p 3000:3000 \
+  -e NODE_ENV=dev \
+  -link memcache:mc \
+  -v /tmp/log/app:/var/log/app:rw \
+  -t -i \
+  njugbe/app:0.1 bash
+
+env # show mc params
+touch /var/log/app/bashtest
+exit
+ls /tmp/log/app/
+
+
+######
+
+
+sudo ./deploy_version.sh njugbe/app 0.1
+
+sudo docker ps # -> CONTAINER_ID
+sudo docker logs CONTAINER_ID # show env var in log etc.
+
+curl localhost:49153
+curl -X POST -d 'value=foo' localhost:$PORT$/myval
+curl localhost:49153/myval
+curl -X POST -d 'value=bar' localhost:$PORT$/myval
+curl localhost:49153/myval
+cat /tmp/log/app/values.log # line by line inserted
+
+
+sudo service nginx reload
+
+curl localhost
+
+curl localhost:8080 # on host machine!!
+
+
+# -- make change in code --
+
+
+cd /vagrant/app
+
+sudo docker build -t njugbe/app:0.2 .
+
+cd ..
+sudo ./deploy_version.sh njugbe/app 0.2
+
+curl localhost # no change
+
+sudo service nginx reload
+
+curl localhost # changes were applied
+curl -X POST -d 'value=bar v2' localhost/myval
+cat /tmp/log/app/values.log
